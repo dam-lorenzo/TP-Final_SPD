@@ -53,7 +53,7 @@ option              db "0",0dh,0ah,24h;variable que almacena respuesta de volver
         mov ax, @data
         mov ds, ax
 
-    inicio:
+    StartTag:
         mov ah, 9     ;IMPRIMO UN CARACTER CON COLOR
         mov bh, 0     ;ELIJO EN QUE PAGINA IMPRIMIR
         mov bl, 0Ah   ;ELIJO EL COLOR (Verde)
@@ -90,9 +90,9 @@ option              db "0",0dh,0ah,24h;variable que almacena respuesta de volver
         mov cl, LivesNumber
         lea dx, startGameText
         call print
-        jmp juego
+        jmp Game
 
-    juego:
+    Game:
         push offset userNumber   ;Se envia el offset de la cadena de numeros que ingresara el usuario
         push offset validNumbers  ;Se envia la lista de caracteres que puede ingresar, de 0 a 9             
         push 4                      ;Se envia la cantidad caracteres que se pueden ingresar, en este caso 4
@@ -107,18 +107,18 @@ option              db "0",0dh,0ah,24h;variable que almacena respuesta de volver
         push dx
         mov dx, 0
         call compareNumbers
-        jmp sigueJuego
+        jmp ContinueGame
 
-    inicioAux:
-        jmp inicio
-    sigueJuego:
+    AuxStart:
+        jmp StartTag
+    ContinueGame:
         cmp dh, 4
-        je ganarJmp
+        je WinTag
 
         lea dx, newLine
         call print
 
-        loop juego              ;Vuelve a ejecutar el programa desde juego:
+        loop Game              ;Vuelve a ejecutar el programa desde juego:
 
         lea dx, newLine
         call print
@@ -145,15 +145,15 @@ option              db "0",0dh,0ah,24h;variable que almacena respuesta de volver
 
         mov dl, option
         cmp dl, 's'
-        je inicioAux
+        je AuxStart
         cmp dl, 'S'
-        je inicioAux
-        jmp fin
+        je AuxStart
+        jmp EndTag
 
-    inicioAux2:
-        jmp inicioAux
+    AuxStart2:
+        jmp AuxStart
 
-    ganarJmp:
+    WinTag:
         lea dx, newLine
         call print
 
@@ -173,12 +173,12 @@ option              db "0",0dh,0ah,24h;variable que almacena respuesta de volver
 
         mov dl, option
         cmp dl, 's'
-        je inicioAux2
+        je AuxStart2
         cmp dl, 'S'
-        je inicioAux2
+        je AuxStart2
 
 
-    fin:
+    EndTag:
         lea dx, newLine
         call print
 
