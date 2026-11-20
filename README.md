@@ -9,7 +9,7 @@ El proyecto consiste en un juego de adivinar un numero de 4 digitos. Al empezar 
 
 ## Consideraciones
 
-El proyecto no usa interrupciones, pero se incluye el archivo `int.asm` que la contiene, no esta 100% funcional. Se reemplazo por las librerias del archivo `random.asm`
+El numero a adivinar no tiene digitos repetidos. Si se ingresa un digito varias veces, va a marcar R en las posiciones que no corresponda.
 
 ## Requisitos
 
