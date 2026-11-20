@@ -18,6 +18,12 @@ El numero a adivinar no tiene digitos repetidos. Si se ingresa un digito varias 
 
 ## Compilar
 
+Se puede usar el script `install.bat` para instalar la interrupcion, compilar el programa, y ejecutarlo.
+
+```bat
+install.bat
+```
+
 Compile los archivos fuente con el siguiente comando, indicando el nombre de cada archivo:
 
 ```bat
