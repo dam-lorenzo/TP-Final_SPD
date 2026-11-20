@@ -6,15 +6,13 @@ org 100h
 start:
     jmp Install
 
-;========================================
-; INTERRUPT SERVICE ROUTINE - INT 80h
-; Argumentos:
-;   BX: Offset donde guardar el numero como ASCII
-;========================================
-
-GetRandomNum PROC FAR
-
-    push ax
+; ------------------------------------------------------------
+; Interrupcion 80h: genera un valor pseudoaleatorio en AX.
+; Entrada: ninguna.
+; Salida:   AX = valor generado.
+; Preserva los demas registros.
+; ------------------------------------------------------------
+RandISR proc far
     push bx
     push cx
     push dx
@@ -24,199 +22,66 @@ GetRandomNum PROC FAR
     push ds
     push es
 
-    ; DS:BX points to the buffer
-
-    GenerateAgain:
-        push ds
-        call Rand
-        pop ds
-
-        call RegToAscii
-
-        mov di, 1
-        xor dx, dx
-        xor cx, cx
-        mov ax, 1
-        xor si, si
-
-    CompareDigits:
-        cmp cl, 3
-        je FinishISR
-
-        cmp dl, 3
-        je NextPass
-
-        mov dh, byte ptr [bx+di]
-
-        cmp byte ptr [bx+si], dh
-        je GenerateAgain
-
-        inc di
-        inc dl
-        jmp CompareDigits
-
-    NextPass:
-        inc si
-        xor dx, dx
-        inc cl
-        mov dl, cl
-        inc ax
-        mov di, ax
-        jmp CompareDigits
-
-    FinishISR:
-
-        pop es
-        pop ds
-        pop bp
-        pop di
-        pop si
-        pop dx
-        pop cx
-        pop bx
-        pop ax
-
-        iret
-
-GetRandomNum ENDP
-
-
-;========================================
-; REGISTER TO ASCII
-; Argumentos:
-;   AX = Numero a convertirn
-;   BX = offset donde guardar
-; Retorno:
-;   Cuatro digitos ASCII en BX
-;========================================
-
-RegToAscii PROC NEAR
-
-    push ax
-    push bx
-    push dx
-    push si
-    push cx
-    pushf
-
-    xor dx, dx
-    mov si, ax
-
-    add bx, 3
-    xor ax, ax
-    mov ax, si
-    mov cx, 10
-    div cx
-
-    mov byte ptr [bx], dl
-    add byte ptr [bx], 30h
-
-    xor dx, dx
-    dec bx
-    div cx
-
-    mov byte ptr [bx], dl
-    add byte ptr [bx], 30h
-
-    xor dx, dx
-    dec bx
-    div cx
-
-    mov byte ptr [bx], dl
-    add byte ptr [bx], 30h
-
-    xor dx, dx
-    dec bx
-    div cx
-
-    mov byte ptr [bx], dl
-    add byte ptr [bx], 30h
-
-    popf
-    pop cx
-    pop si
-    pop dx
-    pop bx
-    pop ax
-
-    ret
-
-RegToAscii ENDP
-
-
-;========================================
-; Generador de numeros aleatoreo
-; retorno:
-;   AX = generated number
-;========================================
-
-Rand PROC NEAR
-
-    push cx
-    push dx
-    pushf
-
     mov ah, 2Ch
     int 21h
 
+    ; DOS devuelve:
+    ; DH = segundos
+    ; DL = centesimas de segundo
+    ; Se multiplican ambos valores.
     xor ax, ax
     mov al, dl
     mul dh
     add ah, al
 
-    popf
+    pop es
+    pop ds
+    pop bp
+    pop di
+    pop si
     pop dx
     pop cx
+    pop bx
 
-    ret
+    iret
+RandISR endp
 
-Rand ENDP
-
-
-;========================================
-; Datos del residente
-;========================================
-
-OldInt80Offset dw 0
+; El vector anterior se guarda por si se necesita restaurarlo.
+OldInt80Offset  dw 0
 OldInt80Segment dw 0
 
-ResidentEnd LABEL BYTE
+ResidentEnd label byte
 
-
-;========================================
-; Instalador IVT
-;========================================
-
+; ------------------------------------------------------------
+; Instalador: registra RandISR en el vector 80h y queda
+; residente en memoria.
+; ------------------------------------------------------------
 Install:
-
     mov ax, cs
     mov ds, ax
     mov es, ax
 
-    ; Obtener el vector de la int 80h anterior
-
+    ; Obtener y guardar el vector 80h anterior.
     mov ax, 3580h
     int 21h
-
     mov OldInt80Offset, bx
     mov OldInt80Segment, es
 
-    ; Instalar GetRandomNum como INT 80h
-
+    ; Instalar nuestra rutina en el vector 80h.
     mov ax, 2580h
-    mov dx, OFFSET GetRandomNum
+    mov dx, offset RandISR
     int 21h
 
-    ; Mantener el programa residente
-
-    mov ax, (15 + OFFSET ResidentEnd)
+    ; Calcular los parrafos que deben quedar residentes.
+    mov ax, (15 + offset ResidentEnd)
     shr ax, 1
     shr ax, 1
     shr ax, 1
     shr ax, 1
-
     mov dx, ax
+
+    ; Terminar y dejar residente la parte anterior a ResidentEnd.
     mov ax, 3100h
     int 21h
 
-END start
+end start
