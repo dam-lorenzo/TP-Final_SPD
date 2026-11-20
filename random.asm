@@ -24,7 +24,7 @@
         mov bx, ss:[bp+4]
 
         ReRand:
-            call rand
+            int 80h
             call RegToAscii
             mov di, 1        ;PASO UNO PORQUE COMPARO CON LA PRIMERA UNIDAD 
             mov dx, 0
